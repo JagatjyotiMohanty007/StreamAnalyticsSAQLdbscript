@@ -1,0 +1,18 @@
+SELECT
+mTi AS MessageTime ,
+source AS Source,
+messageBody.iV AS ICDVersion
+INTO
+    [sampleoutput]
+FROM
+    [sampleinput]
+
+
+SELECT
+MessageTime AS MessageTime ,
+Source AS Source,
+messageBody.ICDVersion AS ICDVersion
+INTO
+    [rawoutput]
+FROM
+    [rawinput]    

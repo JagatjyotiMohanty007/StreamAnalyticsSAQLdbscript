@@ -1,0 +1,122 @@
+SELECT
+mTi AS MessageTime ,
+source AS Source,
+messageBody.iV AS ICDVersion
+INTO
+    [sampleoutput]
+FROM
+    [sampleinput]
+
+
+SELECT
+MessageTime AS MessageTime ,
+Source AS Source,
+messageBody.ICDVersion AS ICDVersion
+INTO
+    [rawoutput]
+FROM
+    [rawinput]    
+	-------------------------------------------
+	
+	
+	exaple:-2
+	
+	SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+    l0.source AS "Source", 
+	l0.messageBody.icdVersion AS "ICDVersion"
+INTO
+    [2005output]
+FROM
+    [2005input] AS l0
+WHERE l0.messageType = 2005
+
+-----------------------exaple-3--------------------
+SELECT 
+input.Date_Val AS [Date_Val]
+,input.Time_val AS [Time_val]
+,input.Failure AS [Failure]
+,input.locoID AS [LocoID]
+,input.Unit AS [FailureCode]
+,input.FailureType AS [FailureType]
+,input.DateTime_Val AS  [DateTime_Val]
+,input.MessageType AS [MessageType]
+INTO  rawlogsoutput
+FROM  mrsrawlogs AS input;
+
+-------------------------exapmle4-----------------------
+-- ##################################################################################################
+-- PROD STREAM
+-- ##################################################################################################
+WITH l0 AS (
+    SELECT 
+        input.*
+    FROM 
+        [MRSProdTMCDecodedEventhub] input
+)
+
+-----------------------------------------------
+-- Stream to Blob
+-----------------------------------------------
+
+SELECT
+    *
+INTO
+    [MRSProdTMCDecodedBlob]
+FROM
+    [l0]
+;
+
+-----------------------------------------------
+-- Stream FLT messages to SQL
+-----------------------------------------------
+
+SELECT
+    dateTime AS TMCMessageTime, locoID AS LocoID, recordID AS RecordID, recordName AS RecoredName, version AS Version,
+    messageBody.faultStatus AS FaultStatus, messageBody.faultSource AS FaultSource, messageBody.faultCode AS FaultCode,
+    messageBody.reportedFault AS ReportedFault
+INTO
+    [MRSProdTMCFLTSQL]
+FROM
+    l0
+WHERE
+    recordID = '19' 
+;
+
+--------------exaple5--------------
+SELECT 
+input.date AS [Date_Val]
+,input.time AS [Time_Val]
+,input.Failure AS [Failure]
+,input.loco AS [LocoID]
+,input.unit AS [Unit]
+,input.FailureType AS [FailureType]
+,input.DateTime AS  [DateTime_Val]
+,input.messageType AS [MessageType]
+INTO metrolinktmcoutput
+FROM metrolinktmcinput AS input;
+
+
+--SELECT
+--    dateTime AS TMCMessageTime, loco AS LocoID, recordID AS RecordID, recordName AS RecoredName, version AS Version,
+--    messageBody.faultStatus AS FaultStatus, messageBody.faultSource AS FaultSource, messageBody.faultCode AS FaultCode,
+--    messageBody.reportedFault AS ReportedFault
+--INTO
+ --   [metrolinktmcfltouptput]
+--FROM
+--    [metrolinktmcinput]
+--WHERE
+ --   recordID = '19' 
+--;
+==================exaple 6=====================
+SELECT 
+input.Date_Val AS [Date_Val]
+,input.Time_val AS [Time_val]
+,input.Failure AS [Failure]
+,input.locoID AS [LocoID]
+,input.Unit AS [FailureCode]
+,input.FailureType AS [FailureType]
+,input.DateTime_Val AS  [DateTime_Val]
+,input.MessageType AS [MessageType]
+INTO rawoutput
+FROM rawinput AS input;

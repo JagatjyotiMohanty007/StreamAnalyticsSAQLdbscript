@@ -1,0 +1,143 @@
+--SELECT
+--    CONCAT(CONCAT(SUBSTRING(CAST(messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(messageTime AS NVARCHAR(MAX)), 12, 8)) AS "datetime", 
+--    source AS "source", 
+--    messageBody.headEndMilepost AS "milepost",
+--    messageBody.headEndTrackName AS "track", 
+--    messageBody.headEndPTCSubdiv AS "subdiv",
+--    messageBody.headEndCurrentPositionLat AS "lat", 
+--    messageBody.headEndCurrentPositionLon AS "lon"
+--INTO
+--    [ocm-pos-sql]
+--FROM
+--    [ocm-processed-eventhub]
+--WHERE messageType = 2080;
+
+--WITH l0 AS (
+--    SELECT 
+--        UDF.guid('a') AS guid, input.*
+--    FROM 
+--        [ocm-processed-eventhub] input
+--)
+--SELECT 
+--    l0.guid AS "guid",
+--    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "1900-01-01 00:00:00", 
+--    l0.destination AS "XX", 
+--    l0.messageBody.ptcAuthorityRefNum AS "X10", 
+--    l0.messageBody.authorityType AS "X20",
+--    l0.messageBody.noOfAuthoritySegments AS "-10", 
+--    authoritySegment.ArrayValue.startingMilepost "-20",
+--    authoritySegment.ArrayValue.endingMilepost "-30",
+--    authoritySegment.ArrayValue.trackName "X30",
+--    l0.messageBody.summaryTextLen AS "-50", 
+--    l0.messageBody.summaryText AS "X40"
+--FROM l0
+--OUTER APPLY GetArrayElements(l0.messageBody.authoritySegments) AS authoritySegment;
+
+--WITH l1 AS (
+--    SELECT UDF.guid('a') AS guid,input.*
+--    FROM [ocm-processed-eventhub] AS input
+--),
+--l2 AS (
+--    SELECT l1.guid, l1.*, l1.messageBody.*, component.ArrayIndex AS componentIndex, component.ArrayValue.*
+--    FROM l1
+--    OUTER APPLY GetArrayElements(l1.messageBody.components) AS component
+--)
+--SELECT 
+--    l2.*, fault.ArrayIndex AS faultIndex, --fault.ArrayIndex.*
+--    fault.ArrayValue.faultState, fault.ArrayValue.faultCode, fault.ArrayValue.faultNameLen, fault.ArrayValue.faultName, fault.ArrayValue.timeFaultDetected
+--INTO
+--    [ocm-pos-blob]
+--FROM l2
+--OUTER APPLY GetArrayElements(l2.faultStateChanges) AS fault
+
+--SELECT
+--    messageTime AS "1900-01-01T00:00:00Z", source AS "X", messageBody.headEndMilepost AS "-1",
+--    messageBody.headEndTrackName AS "XX", messageBody.headEndPTCSubdiv AS "-2",
+--    messageBody.headEndCurrentPositionLat AS "-3", messageBody.headEndCurrentPositionLon AS "-4"
+--INTO
+--    [outputToDatalake]
+--FROM
+--    [MrsprodOcmDecodedEventhub]
+--WHERE messageType = 2080
+--
+--SELECT
+--    messageTime AS "1900-01-01T00:00:00Z", source AS "X", messageBody.headEndMilepost AS "-1",
+--    messageBody.headEndTrackName AS "XX", messageBody.headEndPTCSubdiv AS "-2",
+--    messageBody.headEndCurrentPositionLat AS "-3", messageBody.headEndCurrentPositionLon AS "-4"
+--INTO
+--    [mrsprodocmdecodecsv]
+--FROM
+--    [MrsprodOcmDecodedEventhub]
+--WHERE messageType = 2080
+
+-- ##################################################################################################
+-- PROD STREAM
+-- ##################################################################################################
+--WITH l0 AS (
+--    SELECT 
+--        UDF.guid('a') AS guid, input.*
+--    FROM 
+--        [MrsprodOcmDecodedEventhub] input
+--),
+--l2087 AS (
+--    SELECT l0.*, l0.messageBody.*, component.ArrayIndex AS componentIndex, component.ArrayValue.*
+--    FROM l0
+--    OUTER APPLY GetArrayElements(l0.messageBody.components) AS component
+--    WHERE l0.messageType = 2087
+--)
+--SELECT 
+--    CONCAT(CONCAT(SUBSTRING(CAST(l2087.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l2087.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+--    l2087.source AS "Source",
+--    l2087.icdVersion AS "ICDVersion",
+--    l2087.vendorCode AS "VendorCode",
+--    l2087.systemCode AS "SystemCode",
+--    l2087.locomotiveStateSummary AS "LocoStateSummary",
+--    l2087.locomotiveState AS "LocoState",
+--    l2087.noOfComponents AS "NoOfComps",
+--    l2087.component AS "Component",
+--    l2087.noOfFaultStateChanges AS "NoOfFaultChngs",
+--    fault.ArrayValue.faultState AS "FaultState",
+--    fault.ArrayValue.faultCode AS "FaultCode",
+--    fault.ArrayValue.faultName AS "FaultName",
+--    CONCAT(CONCAT(SUBSTRING(CAST(fault.ArrayValue.timeFaultDetected AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(fault.ArrayValue.timeFaultDetected AS NVARCHAR(MAX)), 12, 8)) AS "FaultDetectedTime"
+--INTO
+--    [ocm-pos-blob]
+--FROM l2087
+--OUTER APPLY GetArrayElements(l2087.faultStateChanges) AS fault
+
+WITH l0 AS (
+    SELECT
+        UDF.parseJSON(message) AS message
+    FROM
+        [MrsprodOcmDecodedEventhub]
+)
+SELECT 
+    message.messageTime AS "MessageTime", 
+    --message.event AS "Event", 
+    message.controlPointName AS "CtrlPointName", 
+    message.eventName AS "EventName",
+    message.eventSource AS "EventSource",
+    UDF.parseDateTime(message.eventTime) AS "EventTime",
+    message.eventType "EventType",
+    message.locoLead AS "LocoLead",
+    message.maxSpeed AS "MaxSpeed",
+    message.numAxles AS "NumAxles",
+    message.numCarsEmpty AS "NumCarsEmpty",
+    message.numCarsLoad AS "NumCarsLoad",
+    message.numOperationAxles AS "NumOperAxles",
+    message.ptcStatus AS "PTCStatus",
+    message.territoryName AS "TerritoryName",
+    message.trackName AS "TrackName",
+    message.trainDirection AS "TrainDirection",
+    message.trainLenght AS "TrainLength",
+    message.trainSymbol AS "TrainSymbol",
+    message.trainTon AS "TrainTon",
+    message.trainUnits AS "TrainUnits",
+    message.userName AS "UserName"
+INTO
+    [ocm-pos-blob]
+FROM
+    l0
+WHERE
+    message.event = 'JsonTrainEvent'
+;

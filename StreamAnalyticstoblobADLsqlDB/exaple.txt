@@ -1,0 +1,171 @@
+-- ##################################################################################################
+-- PROD STREAM
+-- ##################################################################################################
+
+WITH l0 AS (
+    SELECT 
+        UDF.guid('a') AS guid, input.messageBody.decodedMsg.*
+    FROM 
+        [MetrolinkprodOcmDecodedEventhubNew] input
+    WHERE
+        recordID = '21'
+)
+
+-------- MESSAGE 1051 START -------------------
+SELECT 
+    l0.guid AS "UGUID",
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime", 
+    l0.destination AS "Source", 
+    l0.messageBody.ptcAuthorityRefNum AS "PTCAuthorityRefNum", 
+    l0.messageBody.authorityType AS "AuthorityType",
+    l0.messageBody.noOfAuthoritySegments AS "NoOfAuthSegments", 
+    authoritySegment.ArrayValue.startingMilepost "AuthSegStartingMilepost",
+    authoritySegment.ArrayValue.endingMilepost "AuthSegEndingMilepost",
+    authoritySegment.ArrayValue.trackName "AuthSegTrackName",
+    l0.messageBody.summaryTextLen AS "SummaryTextLen", 
+    l0.messageBody.summaryText AS "SummaryText"
+INTO
+    [metrolink-ocm-decoded-1051]
+FROM 
+    l0
+OUTER APPLY GetArrayElements(l0.messageBody.authoritySegments) AS authoritySegment
+WHERE l0.messageType = 1051;
+-------- MESSAGE 1051 END -------------------
+
+-------- MESSAGE 2083 START -------------------
+SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+    l0.source AS "Source", 
+	l0.messageBody.trainId AS "TrainId",
+    l0.messageBody.warnEnforceType AS "WarnEnfType",
+    l0.messageBody.onboardSoftwareVersion AS "SoftwareVer",
+	l0.messageBody.targetInformation.targetType AS "TrgtTargetType",
+    l0.messageBody.targetInformation.targetDescription AS "TrgtTargetDesc", 
+    l0.messageBody.targetInformation.startMilepost AS "TrgtStartMilepost",
+	l0.messageBody.targetInformation.startTrackName AS "TrgtStartTrackName", 
+    l0.messageBody.targetInformation.endMilepost AS "TrgtEndMilepost",
+	l0.messageBody.targetInformation.endTrackName AS "TrgtEndTrackName", 
+    l0.messageBody.targetInformation.targetSpeed AS "TrgtTargetSpeed",
+    CASE 
+        WHEN l0.messageBody.warningInformation.warningTime IS NOT NULL THEN 
+            CONCAT(CONCAT(SUBSTRING(CAST(l0.messageBody.warningInformation.warningTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageBody.warningInformation.warningTime AS NVARCHAR(MAX)), 12, 8))
+        ELSE
+            NULL
+    END AS "WarnTime",
+    l0.messageBody.warningInformation.startMilepost AS "WarnStartMilepost",
+    l0.messageBody.warningInformation.startTrackName AS "WarnStartTrackName",
+    l0.messageBody.warningInformation.warningDistance AS "WarnDistance",
+    l0.messageBody.warningInformation.directionOfTravel AS "WarnDirectionOfTravel",
+    l0.messageBody.warningInformation.trainSpeed AS "WarnTrainSpeed",
+    l0.messageBody.warningInformation.ptcSubdiv AS "WarnPTCSubdiv",
+    l0.messageBody.warningInformation.headEndPositionLat AS "WarnPosLat",
+    l0.messageBody.warningInformation.headEndPositionLon AS "WarnPosLon",
+    l0.messageBody.enforcementInformation.startMilepost AS "EnfStartMilepost", 
+    l0.messageBody.enforcementInformation.startTrackName AS "EnfStartTrackName",
+    l0.messageBody.enforcementInformation.brakingDistance AS "EnfBrakingDistance",
+	l0.messageBody.enforcementInformation.directionOfTravel AS "EnfDirectionOfTravel",
+    l0.messageBody.enforcementInformation.trainSpeed AS "EnfTrainSpeed",
+    l0.messageBody.enforcementInformation.ptcSubdiv AS "EnfPTCSubdiv",
+    l0.messageBody.enforcementInformation.headEndPositionLat AS "EnfPosLat",
+    l0.messageBody.enforcementInformation.headEndPositionLon AS "EnfPosLon",
+    l0.messageBody.emergencyEnforcementBrakingInformation.startMilepost AS "BrkStartMilepost",
+    l0.messageBody.emergencyEnforcementBrakingInformation.startTrackName AS "BrkStartTrackName",
+    l0.messageBody.emergencyEnforcementBrakingInformation.brakingDistance AS "BrkBrakingDistance",
+    l0.messageBody.emergencyEnforcementBrakingInformation.directionOfTravel AS "BrkDirectionOfTravel",
+    l0.messageBody.emergencyEnforcementBrakingInformation.trainSpeed AS "BrkTrainSpeed",
+    l0.messageBody.emergencyEnforcementBrakingInformation.ptcSubdiv AS "BrkPTCSubdiv",
+    l0.messageBody.emergencyEnforcementBrakingInformation.headEndPositionLat AS "BrkPosLat",
+    l0.messageBody.emergencyEnforcementBrakingInformation.headEndPositionLon AS "BrkPosLon",
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageBody.currentInformation.time AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageBody.currentInformation.time AS NVARCHAR(MAX)), 12, 8)) AS "CurrTime",
+    l0.messageBody.currentInformation.milepost AS "CurrMilepost",
+    l0.messageBody.currentInformation.trackName AS "CurrTrackName",
+    l0.messageBody.currentInformation.directionOfTravel AS "CurrDirectionOfTravel",
+    l0.messageBody.currentInformation.trainSpeed AS "CurrTrainSpeed",
+    l0.messageBody.currentInformation.ptcSubdiv AS "CurrPTCSubdiv",
+    l0.messageBody.currentInformation.headEndPositionLat AS "CurrPosLat",
+    l0.messageBody.currentInformation.headEndPositionLon AS "CurrPosLon"
+INTO
+    [metrolink-ocm-decoded-2083]
+FROM
+    l0
+WHERE l0.messageType = 2083; -- AND (messageBody.targetInformation.targetType ='Form based authority' OR  messageBody.targetInformation.targetType ='Track Device');
+-------- MESSAGE 2083 END -------------------
+
+-------- MESSAGE 2080 START -------------------
+SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime", 
+    l0.source AS "Source", 
+	l0.messageBody.currentPTCRefNum AS "CurrentPTCRefNum",
+	l0.messageBody.headEndMilepost AS "HeadEndMilepost", 
+    l0.messageBody.headEndTrackName AS "HeadEndTrackName",
+	l0.messageBody.rearEndMilepost AS "RearEndMilepost", 
+    l0.messageBody.rearEndTrackName AS "RearEndTrackName",	
+	l0.messageBody.directionOfTravel AS "DirectionOfTravel", 
+    l0.messageBody.headEndPTCSubdiv AS "HeadEndPTCSubdiv",
+    l0.messageBody.headEndCurrentPositionLat AS "HeadEndPositionLat", 
+    l0.messageBody.headEndCurrentPositionLon AS "HeadEndPositionLon",
+    l0.messageBody.locomotiveState AS "LocomotiveState",
+    l0.messageBody.speed AS "Speed",
+    l0.messageBody.reasonForReport AS "ReasonForReport",
+    l0.messageBody.locomotiveStateSummary AS "LocoStateSummary"
+INTO
+    [metrolink-ocm-decoded-2080]
+FROM
+    l0
+WHERE l0.messageType = 2080;
+-------- MESSAGE 2080 END -------------------
+
+-------- MESSAGE 2052 START -------------------
+SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+    l0.source AS "Source", 
+	l0.messageBody.ptcAuthorityRefNum AS "PTCAuthorityRefNum",
+    l0.messageBody.acknowledgementIndication AS "AckIndication"
+INTO
+    [metrolink-ocm-decoded-2052]
+FROM
+    l0
+WHERE l0.messageType = 2052;
+-------- MESSAGE 2052 END -------------------
+
+-------- MESSAGE 2003 START -------------------
+SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+    l0.source AS "Source", 
+    l0.messageBody.reasonForSending AS "ReasonForSending",
+	l0.messageBody.trainId AS "TrainId",
+    l0.messageBody.employeeFirstName AS "EmpFirstName",
+    l0.messageBody.employeeMiddleName AS "EmpMiddleName",
+    l0.messageBody.employeeLastName AS "EmpLastName",
+    l0.messageBody.onboardSoftwareVersion AS "SoftwareVer"    
+INTO
+    [metrolink-ocm-decoded-2003]
+FROM
+    l0
+WHERE l0.messageType = 2003;
+-------- MESSAGE 2003 END -------------------
+
+-------- MESSAGE 2005 START -------------------
+SELECT
+    CONCAT(CONCAT(SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 1, 10), ' '), SUBSTRING(CAST(l0.messageTime AS NVARCHAR(MAX)), 12, 8)) AS "MessageTime",
+    l0.source AS "Source", 
+	l0.messageBody.icdVersion AS "ICDVersion"
+INTO
+    [metrolink-ocm-decoded-2005]
+FROM
+    l0
+WHERE l0.messageType = 2005;
+-------- MESSAGE 2005 END -------------------
+
+-------- MESSAGE FLT START -------------------
+SELECT
+    dateTime AS TMCMessageTime, locoID AS LocoID, recordID AS RecordID, recordName AS RecoredName, version AS Version,
+    messageBody.faultStatus AS FaultStatus, messageBody.faultSource AS FaultSource, messageBody.faultCode AS FaultCode,
+    messageBody.reportedFault AS ReportedFault
+INTO
+    [metrolink-ocm-decoded-flt]
+FROM
+    MetrolinkprodOcmDecodedEventhubNew
+WHERE
+    recordID = '19';
+-------- MESSAGE FLT END -------------------
